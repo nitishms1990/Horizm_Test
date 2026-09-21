@@ -25,6 +25,61 @@ model Org {
   posts        Post[]
   rateCards    RateCard[]
   socialAccounts SocialAccount[]
+  audienceSnapshots AudienceSnapshot[]
+}
+
+/// Followers on a given day, with the breakdowns that came with them.
+/// Shaped after Instagram's insights: aggregate cohorts, never individual people.
+model AudienceSnapshot {
+  id         String             @id @default(cuid())
+  orgId      String
+  org        Org                @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  capturedAt DateTime
+  followers  Int
+  reach28d   Int
+  breakdowns AudienceBreakdown[]
+
+  @@unique([orgId, capturedAt])
+  @@index([orgId, capturedAt])
+}
+
+/// One slice of an audience: "country / GB / 0.62". Shares sum to 1 per dimension.
+model AudienceBreakdown {
+  id         String           @id @default(cuid())
+  snapshotId String
+  snapshot   AudienceSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+  dimension  String // country | city | age | gender
+  key        String // "GB", "Bristol", "25-34", "female"
+  label      String
+  share      Float
+  followers  Int
+
+  @@index([snapshotId, dimension])
+}
+
+/// Every analyst question, with the tools it reached for and what it answered.
+/// An agent that can't be audited can't be trusted with a client's numbers.
+model AgentRun {
+  id         String   @id @default(cuid())
+  orgId      String
+  userId     String
+  question   String
+  answer     String   @default("")
+  toolsUsed  String   @default("[]")
+  durationMs Int      @default(0)
+  error      String?
+  createdAt  DateTime @default(now())
+
+  @@index([orgId, createdAt])
+}
+
+/// What a thousand impressions is worth in a given market, used to value exposure
+/// by where the audience actually is rather than at one blended rate.
+model MarketRate {
+  id      String @id @default(cuid())
+  country String @unique
+  label   String
+  cpmIndex Float // multiplier against the club's rate card; 1.0 = home market
 }
 
 model User {

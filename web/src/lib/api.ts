@@ -97,6 +97,30 @@ export type Marketplace = {
   note?: string;
 };
 
+export type AudienceRow = { key: string; label: string; share: number; followers: number };
+
+export type Audience = {
+  capturedAt: string;
+  followers: number;
+  reach28d: number;
+  breakdowns: { country: AudienceRow[]; city: AudienceRow[]; age: AudienceRow[]; gender: AudienceRow[] };
+  trend: { label: string; followers: number; reach28d: number }[];
+  note: string;
+};
+
+export type MarketValue = {
+  window: { days: number };
+  totals: { value: number; impressions: number; posts: number };
+  markets: {
+    country: string;
+    label: string;
+    audienceShare: number;
+    cpmIndex: number;
+    impressions: number;
+    value: number;
+  }[];
+};
+
 export type OrgProfile = {
   org: {
     id: string;

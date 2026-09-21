@@ -14,6 +14,7 @@ import { PLACEMENT_KEYS } from "@horizm/contracts";
 import { db } from "../db.js";
 import { hashPassword } from "../auth.js";
 import { drawScene, ensureFonts, SCENE_HEIGHT, SCENE_WIDTH, type SceneSponsor } from "./scene.js";
+import { seedAudience, seedMarketRates } from "./audience.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const MEDIA_DIR = path.resolve(here, "..", "..", "media");
@@ -42,6 +43,7 @@ const CLUBS = [
     name: "Bristol City Football Club",
     shortName: "Bristol City",
     stadium: "Ashton Gate",
+    city: "Bristol",
     handle: "bristolcityfc",
     primaryColor: "#C8102E",
     accentColor: "#1B1B1B",
@@ -57,6 +59,7 @@ const CLUBS = [
     name: "Birmingham City Football Club",
     shortName: "Birmingham City",
     stadium: "St Andrew's",
+    city: "Birmingham",
     handle: "bcfc",
     primaryColor: "#1B3A8F",
     accentColor: "#FFFFFF",
@@ -72,6 +75,7 @@ const CLUBS = [
     name: "Coventry City Football Club",
     shortName: "Coventry City",
     stadium: "Coventry Building Society Arena",
+    city: "Coventry",
     handle: "coventrycity",
     primaryColor: "#2E5FA3",
     accentColor: "#0B2545",
@@ -87,6 +91,7 @@ const CLUBS = [
     name: "Derby County Football Club",
     shortName: "Derby County",
     stadium: "Pride Park",
+    city: "Derby",
     handle: "dcfcofficial",
     primaryColor: "#10233F",
     accentColor: "#C4C4C4",
@@ -102,6 +107,7 @@ const CLUBS = [
     name: "Hull City Football Club",
     shortName: "Hull City",
     stadium: "MKM Stadium",
+    city: "Hull",
     handle: "hullcity",
     primaryColor: "#C4711A",
     accentColor: "#111111",
@@ -149,6 +155,9 @@ async function main() {
   ensureFonts();
 
   console.log("Clearing the database…");
+  await db.audienceBreakdown.deleteMany();
+  await db.audienceSnapshot.deleteMany();
+  await db.marketRate.deleteMany();
   await db.detection.deleteMany();
   await db.post.deleteMany();
   await db.session.deleteMany();
@@ -162,7 +171,8 @@ async function main() {
   await mkdir(path.join(MEDIA_DIR, "posts"), { recursive: true });
   await mkdir(path.join(MEDIA_DIR, "uploads"), { recursive: true });
 
-  console.log("Creating sponsors…");
+  console.log("Creating market rates and sponsors…");
+  await seedMarketRates();
   const sponsorsBySlug = new Map<string, { id: string; name: string; slug: string }>();
   for (const sponsor of SPONSORS) {
     const created = await db.sponsor.create({ data: sponsor });
@@ -203,6 +213,14 @@ async function main() {
     };
 
     const random = rng(1000 + clubIndex * 37);
+
+    await seedAudience({
+      orgId: org.id,
+      followers: club.followers,
+      homeCity: club.city,
+      random,
+      weeks: Math.round(WINDOW_DAYS / 7),
+    });
 
     for (let i = 0; i < POSTS_PER_CLUB; i++) {
       // Boards rotate between matches, the way a real LED cycle would.
