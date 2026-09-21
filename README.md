@@ -73,6 +73,61 @@ the player is standing in front of. The seeded detections are that truth with a 
 rather than a model's guess, so every figure in the pilot is internally consistent and no
 club's photography is used.
 
+## The analyst agent
+
+The dashboard carries an **Ask the analyst** panel. Questions go to an agent that can
+only reach your data through the platform's own MCP tools — there is no SQL tool, and no
+tool takes a club id, so it can only ever answer about the club you are signed in as.
+
+It answers in 15 to 40 seconds and streams the tools it reaches for as it works, so a
+question never looks like a frozen page. Every run is written to `AgentRun`: the question,
+the tools called, the answer, how long it took. An agent that can't be audited has no
+business near a client's numbers.
+
+The loop is currently the `claude` command driving the tools over MCP, which means no API
+key. `api/src/agent/runner.ts` is the only file that knows that; swapping it for the
+Anthropic SDK's tool runner changes nothing else. Set `HORIZM_AGENT_MODEL` to change the
+model (default `sonnet`, which is quick and reads small JSON perfectly well).
+
+## MCP: point your own agent at the platform
+
+The same tools are served over HTTP at `POST /mcp`, always warm. To connect your own agent:
+
+```bash
+# signed in as a club, mint a token scoped to it
+curl -X POST http://127.0.0.1:4000/mcp/token -b cookies.txt
+```
+
+```json
+{
+  "mcpServers": {
+    "horizm": {
+      "type": "http",
+      "url": "http://127.0.0.1:4000/mcp",
+      "headers": { "x-horizm-token": "<token>" }
+    }
+  }
+}
+```
+
+Tools: `get_club`, `get_summary`, `list_sponsors`, `get_sponsor`, `list_posts`,
+`get_audience`, `get_market_value`, `get_benchmarks`. All read-only, all scoped to the
+token's club, and `get_benchmarks` returns the same anonymised shape as the marketplace.
+
+There is a stdio server too (`npx tsx src/mcp/stdio.ts` with `HORIZM_ORG_ID` set) for
+clients that spawn a process, but HTTP is the one to use: a spawned server was still
+connecting when the first question arrived, and the model answered without its tools.
+
+## Audience
+
+`/audience` shows followers, 28-day reach, and the split by country, city, age band and
+gender — shaped after what Instagram's insights actually return, which is **aggregate
+cohorts, never individual people**.
+
+Joining that to exposure gives value by market: the same measured exposure, distributed by
+where the audience is and re-priced with each market's CPM index, because a thousand
+impressions in London and a thousand in Lagos are not worth the same to a sponsor.
+
 ## The marketplace
 
 Benchmarks are anonymised in SQL, not in the interface. The endpoint returns your value, the

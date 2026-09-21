@@ -7,6 +7,9 @@ import { registerOrgRoutes } from "./routes/org.js";
 import { registerPostRoutes } from "./routes/posts.js";
 import { registerSponsorRoutes } from "./routes/sponsors.js";
 import { registerMarketplaceRoutes } from "./routes/marketplace.js";
+import { registerAudienceRoutes } from "./routes/audience.js";
+import { registerAgentRoutes } from "./routes/agent.js";
+import { registerMcpRoutes } from "./routes/mcp.js";
 import { MEDIA_DIR } from "./paths.js";
 
 const COOKIE_SECRET = process.env.COOKIE_SECRET ?? "pilot-only-secret-change-before-hosting";
@@ -25,6 +28,9 @@ export async function buildServer() {
   await app.register(registerPostRoutes, { prefix: "/v1" });
   await app.register(registerSponsorRoutes, { prefix: "/v1/sponsors" });
   await app.register(registerMarketplaceRoutes, { prefix: "/v1/marketplace" });
+  await app.register(registerAudienceRoutes, { prefix: "/v1/audience" });
+  await app.register(registerAgentRoutes, { prefix: "/v1/agent" });
+  await app.register(registerMcpRoutes, { prefix: "/mcp" });
 
   return app;
 }

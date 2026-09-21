@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@horizm/contracts": "file:../contracts",
+    "marked": "^18.0.13",
     "next": "16.3.5",
     "react": "19.2.8",
     "react-dom": "19.2.8"

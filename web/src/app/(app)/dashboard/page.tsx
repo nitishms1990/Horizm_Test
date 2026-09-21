@@ -4,6 +4,7 @@ import StatTile from "@/components/StatTile";
 import TrendChart from "@/components/TrendChart";
 import SponsorTable from "@/components/SponsorTable";
 import ConnectAccount from "./ConnectAccount";
+import AskAnalyst from "@/components/AskAnalyst";
 import { compact, money, shortDate } from "@/lib/format";
 
 export default async function DashboardPage() {
@@ -34,6 +35,8 @@ export default async function DashboardPage() {
         <StatTile label="Impressions" value={compact(summary.totals.impressions)} note="Across analyzed posts" />
         <StatTile label="Logo appearances" value={String(summary.totals.detections)} note="Counted towards value" />
       </div>
+
+      <AskAnalyst />
 
       <section className="rounded-md border border-[var(--rule)] bg-[var(--surface)]">
         <h2 className="display px-5 pt-4 text-xl font-semibold">Media value by week</h2>
