@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+/*
+  One palette, used by every screen. Pitch green for the brand, amber for anything the
+  system found in an image (pins, markers), and a cool neutral for surfaces.
+*/
+:root {
+  --ground: #eef1ee;
+  --surface: #ffffff;
+  --ink: #15201b;
+  --muted: #5a6861;
+  --rule: #d2d9d4;
+  --accent: #e3a21a;
+  --accent-ink: #8a5a00;
+  --turf: #1d5a40;
+  --on-turf: #ffffff;
+  --turf-soft: #dce8e1;
+  --monitor: #0b100d;
+  --danger: #b42318;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ground: #0e1411;
+    --surface: #151d19;
+    --ink: #e3eae5;
+    --muted: #93a199;
+    --rule: #27322c;
+    --accent: #f0ae2e;
+    --accent-ink: #f0b849;
+    --turf: #5db48d;
+    --on-turf: #0b120e;
+    --turf-soft: #1f2e27;
+    --monitor: #050806;
+    --danger: #f97066;
+  }
+}
+
+@theme inline {
+  --color-ground: var(--ground);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-rule: var(--rule);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-turf: var(--turf);
+  --color-on-turf: var(--on-turf);
+  --color-turf-soft: var(--turf-soft);
+  --color-monitor: var(--monitor);
+  --color-danger: var(--danger);
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
+}
+
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-body), system-ui, sans-serif;
+}
+
+.display {
+  font-family: var(--font-display), "Arial Narrow", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+
+.label {
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
