@@ -99,7 +99,9 @@ export default function AskAnalyst() {
     <section className="rounded-md border border-[var(--rule)] bg-[var(--surface)]">
       <div className="flex flex-wrap items-center justify-between gap-2 px-5 pt-4">
         <h2 className="display text-xl font-semibold">Ask the analyst</h2>
-        <span className="label">Reads your data with the platform&apos;s own tools</span>
+        <a href="/ask" className="text-sm text-[var(--muted)] hover:text-[var(--turf)]">
+          Open a conversation
+        </a>
       </div>
 
       <form

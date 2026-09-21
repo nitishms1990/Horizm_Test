@@ -76,7 +76,18 @@ function runClaude(cwd: string, prompt: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const child = spawn(
       "claude",
-      ["-p", "--output-format", "json", "--allowedTools", "Read", "--strict-mcp-config"],
+      [
+        "-p",
+        // Sonnet reads logos off a frame as well as anything and answers in a third of
+        // the time. HORIZM_VISION_MODEL overrides it.
+        "--model",
+        process.env.HORIZM_VISION_MODEL ?? "sonnet",
+        "--output-format",
+        "json",
+        "--allowedTools",
+        "Read",
+        "--strict-mcp-config",
+      ],
       { cwd, env: claudeEnv(), shell: process.platform === "win32" },
     );
 

@@ -2,9 +2,9 @@
  * The analyst agent.
  *
  * The model runs against the MCP tools in ../mcp/server.ts and nothing else: no database
- * handle, no SQL, and no tool that takes a club id. The club is pinned by the
- * HORIZM_ORG_ID passed to that process, which comes from the signed-in session, so a
- * question can only ever be answered about the asker's own club.
+ * handle, no SQL, and no tool that takes a club id. It reaches them over this API's own
+ * /mcp endpoint with a token minted from the signed-in session, so a question can only
+ * ever be answered about the asker's own club.
  *
  * Today the loop is the `claude` command, which uses the sign-in on this machine and
  * needs no API key. Swapping it for the Anthropic SDK's tool runner later changes this
@@ -57,7 +57,7 @@ The horizm tools may be listed as deferred. If you cannot see them, load them fi
 export type AgentEvent =
   | { type: "tool"; name: string; input: unknown }
   | { type: "text"; text: string }
-  | { type: "done"; text: string; ms: number }
+  | { type: "done"; text: string; ms: number; sessionId: string | null }
   | { type: "error"; message: string };
 
 /** Claude Code on Windows needs Git Bash; find it next to git when it isn't configured. */
@@ -101,7 +101,11 @@ async function writeMcpConfig(dir: string, orgId: string) {
  * Runs one question and yields events as they happen: which tool the model reached for,
  * the answer text, then a final event with timing.
  */
-export async function* ask(question: string, orgId: string): AsyncGenerator<AgentEvent> {
+export async function* ask(
+  question: string,
+  orgId: string,
+  resumeSessionId?: string,
+): AsyncGenerator<AgentEvent> {
   const started = Date.now();
   const workdir = await mkdtemp(path.join(tmpdir(), "horizm-agent-"));
   const queue: AgentEvent[] = [];
@@ -140,6 +144,9 @@ export async function* ask(question: string, orgId: string): AsyncGenerator<Agen
         "14",
         "--append-system-prompt",
         SYSTEM_PROMPT,
+        // Continuing a conversation: the model keeps what it already read, so a
+        // follow-up costs one round instead of repeating every tool call.
+        ...(resumeSessionId ? ["--resume", resumeSessionId] : []),
       ],
       { cwd: workdir, env: claudeEnv({}), shell: process.platform === "win32" },
     );
@@ -153,6 +160,7 @@ export async function* ask(question: string, orgId: string): AsyncGenerator<Agen
     let answer = "";
     let buffer = "";
     let stderr = "";
+    let sessionId: string | null = resumeSessionId ?? null;
 
     child.stdout.setEncoding("utf8");
     child.stdout.on("data", (chunk: string) => {
@@ -162,12 +170,20 @@ export async function* ask(question: string, orgId: string): AsyncGenerator<Agen
 
       for (const line of lines) {
         if (!line.trim()) continue;
-        let event: { type?: string; message?: { content?: { type: string; name?: string; input?: unknown; text?: string }[] }; result?: string; is_error?: boolean };
+        let event: {
+          type?: string;
+          session_id?: string;
+          message?: { content?: { type: string; name?: string; input?: unknown; text?: string }[] };
+          result?: string;
+          is_error?: boolean;
+        };
         try {
           event = JSON.parse(line);
         } catch {
           continue;
         }
+
+        if (event.session_id) sessionId = event.session_id;
 
         if (event.type === "assistant" && event.message?.content) {
           for (const block of event.message.content) {
@@ -186,7 +202,7 @@ export async function* ask(question: string, orgId: string): AsyncGenerator<Agen
             push({ type: "error", message: String(event.result ?? "The analyst failed.").slice(0, 300) });
           } else {
             const text = typeof event.result === "string" && event.result.trim() ? event.result : answer;
-            push({ type: "done", text, ms: Date.now() - started });
+            push({ type: "done", text, ms: Date.now() - started, sessionId });
           }
           finished = true;
         }

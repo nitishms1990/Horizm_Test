@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { apiGet, type OrgProfile, type PostDetail } from "@/lib/api";
 import { compact, shortDate } from "@/lib/format";
-import PostAnalysis from "./PostAnalysis";
+import PostAnalysis from "@/components/PostAnalysis";
 
 export default async function PostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

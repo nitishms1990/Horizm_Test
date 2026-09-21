@@ -14,7 +14,10 @@ export async function registerAgentRoutes(app: FastifyInstance) {
     const user = await requireUser(request, reply);
     if (!user) return;
 
-    const question = String((request.query as { q?: string }).q ?? "").trim();
+    const query = request.query as { q?: string; session?: string };
+    const question = String(query.q ?? "").trim();
+    // Continuing an existing conversation, so follow-ups don't re-read everything.
+    const session = typeof query.session === "string" && /^[\w-]{6,64}$/.test(query.session) ? query.session : undefined;
     if (!question) return reply.code(400).send({ error: "Ask a question." });
     if (question.length > MAX_QUESTION) {
       return reply.code(400).send({ error: `Keep the question under ${MAX_QUESTION} characters.` });
@@ -33,7 +36,7 @@ export async function registerAgentRoutes(app: FastifyInstance) {
     const started = Date.now();
 
     try {
-      for await (const event of ask(question, user.orgId)) {
+      for await (const event of ask(question, user.orgId, session)) {
         if (event.type === "tool") toolsUsed.push(event.name);
         if (event.type === "done") answer = event.text;
         if (event.type === "error") failure = event.message;
