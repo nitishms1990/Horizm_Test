@@ -1,0 +1,33 @@
+{
+  "name": "@horizm/api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sponsor exposure API: data, auth and image analysis.",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "start": "tsx src/main.ts",
+    "seed": "tsx src/seed/seed.ts",
+    "db:push": "prisma db push",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^11.0.2",
+    "@fastify/multipart": "^9.0.3",
+    "@fastify/static": "^8.0.4",
+    "@horizm/contracts": "file:../contracts",
+    "@prisma/client": "^6.2.1",
+    "bcryptjs": "^2.4.3",
+    "fastify": "^5.2.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@napi-rs/canvas": "^0.1.65",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^22.10.5",
+    "prisma": "^6.2.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  }
+}

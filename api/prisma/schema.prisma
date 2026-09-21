@@ -1,0 +1,125 @@
+// Pilot database. SQLite so the whole thing runs from a file with nothing to install;
+// moving to Postgres later is a change to `provider` and `url` only.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// A rights holder: one club, one tenant. Every query is scoped by this.
+model Org {
+  id           String          @id @default(cuid())
+  slug         String          @unique
+  name         String
+  shortName    String
+  sport        String
+  division     String
+  primaryColor String
+  accentColor  String
+  createdAt    DateTime        @default(now())
+  users        User[]
+  posts        Post[]
+  rateCards    RateCard[]
+  socialAccounts SocialAccount[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         String   @default("member")
+  orgId        String
+  org          Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  sessions     Session[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+/// A connected social account. In the pilot this is switched on rather than authorised.
+model SocialAccount {
+  id          String    @id @default(cuid())
+  orgId       String
+  org         Org       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  platform    String
+  handle      String
+  connectedAt DateTime?
+  demo        Boolean   @default(true)
+
+  @@unique([orgId, platform])
+}
+
+/// What a placement is worth to this club, per thousand impressions.
+model RateCard {
+  id        String @id @default(cuid())
+  orgId     String
+  org       Org    @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  placement String
+  cpm       Float
+
+  @@unique([orgId, placement])
+}
+
+/// A brand, shared across clubs so the marketplace can compare like with like.
+model Sponsor {
+  id         String      @id @default(cuid())
+  slug       String      @unique
+  name       String
+  category   String
+  detections Detection[]
+}
+
+model Post {
+  id          String      @id @default(cuid())
+  orgId       String
+  org         Org         @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  externalId  String      @unique
+  platform    String      @default("instagram")
+  caption     String
+  postedAt    DateTime
+  imagePath   String
+  width       Int
+  height      Int
+  impressions Int
+  reach       Int
+  likes       Int
+  comments    Int
+  scene       String      @default("")
+  analyzedAt  DateTime?
+  source      String      @default("seed") // "seed" or "upload"
+  detections  Detection[]
+
+  @@index([orgId, postedAt])
+}
+
+/// One logo, once, in one post. Mirrors the shape the vision model returns.
+model Detection {
+  id          String  @id @default(cuid())
+  postId      String
+  post        Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  sponsorId   String
+  sponsor     Sponsor @relation(fields: [sponsorId], references: [id])
+  placement   String
+  location    String
+  x           Float
+  y           Float
+  sizePct     Float
+  clarity     Float
+  obstruction Float
+  confidence  Float
+  counted     Boolean @default(true)
+
+  @@index([postId])
+  @@index([sponsorId])
+}
