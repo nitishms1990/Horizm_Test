@@ -1,0 +1,15 @@
+node_modules/
+.next/
+dist/
+out/
+
+# Local database and generated demo media
+*.db
+*.db-journal
+api/media/posts/
+api/media/uploads/
+
+.env
+.env.local
+.DS_Store
+*.log
